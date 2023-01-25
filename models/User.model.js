@@ -16,6 +16,10 @@ const userSchema = new Schema(
 		type: Schema.Types.ObjectId,
 		ref: 'Business',
 		},
+    services:{
+		type: Schema.Types.ObjectId,
+		ref: 'Service',
+		},
   },
   {
     versionKey: false,
