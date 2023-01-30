@@ -12,6 +12,10 @@ router.get('/',(req, res, next) => {
         res.json(all))
 })
 
+
+/////////////777777  CREATE ROUTE TO UPDATE THE CREATE PROFILE USER
+
+
 // router.get('/:userID', (req, res, next) => {
 // 	User.findById(req.params.userID)
 // 		.populate('business')
