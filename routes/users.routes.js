@@ -1,15 +1,42 @@
 const router = require('express').Router();
 const nodemailer = require("nodemailer");
 
-// const Business = require('../models/Bussiness.model');
+const Business = require('../models/Bussiness.model');
 const User = require('../models/User.model');
-// const Order = require('../models/Order.model');
+const { isAuthenticated } = require('../middleware/jwt.middleware.js');
 
 // const  mail = require('../data/mails')
 
 router.get('/',(req, res, next) => {
     User.find().then(all =>
         res.json(all))
+})
+
+router.post('/updateUser/:userID', (req, res, next) => {
+    const { fullName,phone,country,pictureUrl,experience,businessID } = req.body;
+    const userID = req.params.userID
+
+    User.findByIdAndUpdate(userID,{ fullName,phone,country,pictureUrl,experience,businessID },{new:true} ).populate('businessID')
+    .then((userUpdated)=>{
+        const newRol = userUpdated.businessID.owner === userUpdated._id ? 'admin' : 'adminPending'
+
+        return User.findByIdAndUpdate(userID,{ rol:newRol },{new:true} )
+        })
+        .then((userUpdated2)=>{
+            Business.findByIdAndUpdate(userUpdated2.businessID,{$push:{'employees':userUpdated2._id}},{new:true})
+            res.status(200).json(userUpdated2)})
+    .catch(err => {
+        console.log(err)
+        res.status(500).json({ message: "Sorry internal error occurred" })
+        });
+})
+
+router.get('/:userID',(req, res, next) => {
+    const userID = req.params.userID
+    User.findById(userID).populate('businessID').then(userFound =>{
+        const {businessID,rol,fullName} = userFound
+        const userInfo = {businessID,rol,fullName}
+        res.status(200).json(userInfo)})
 })
 
 

@@ -136,14 +136,16 @@ router.post('/login', (req, res, next) => {
 				const {
 					username,
 					_id,
-					rol
+					rol,
+					businessID
 				} = foundUser;
 
 				// Create an object that will be set as the token payload
 				const payload = {
 					username,
 					_id,
-					rol
+					rol,
+					businessID
 				};
 
 				// Create and sign the token

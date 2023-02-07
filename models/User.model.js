@@ -13,7 +13,7 @@ const userSchema = new Schema(
 			type: String,
 			enum: ['developer', 'adminPending','admin', 'operator', 'operatorPending', 'user'],
 		},
-		business:{
+		businessID:{
       type: Schema.Types.ObjectId,
       ref: 'Business',
 		},
