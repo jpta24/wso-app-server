@@ -89,15 +89,13 @@ router.post('/signup', (req, res, next) => {
           </div>
           `,
 			};
-
-			transporter.sendMail(mailCreateAccount, function (error, info) {
-				if (error) {
-					console.log(error);
-				} else {
-					console.log('Email Create Account sent: ' + info.response);
-				}
-			});
-
+			// transporter.sendMail(mailCreateAccount, function (error, info) {
+			// 	if (error) {
+			// 		console.log(error);
+			// 	} else {
+			// 		console.log('Email Create Account sent: ' + info.response);
+			// 	}
+			// });
 			// Send a json response containing the user object
 			console.log(user);
 			res.status(201).json({ user: user });

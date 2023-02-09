@@ -31,7 +31,7 @@ const businessSchema = new Schema(
 				ref: 'Service',
 			},
 		],
-        employees:[
+        members:[
 			{
 				type: Schema.Types.ObjectId,
 				ref: 'User',

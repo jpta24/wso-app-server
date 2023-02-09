@@ -13,31 +13,40 @@ router.get('/',(req, res, next) => {
 })
 
 router.post('/updateUser/:userID', (req, res, next) => {
-    const { fullName,phone,country,pictureUrl,experience,businessID } = req.body;
+    const { fullName,phone,country,pictureUrl,position,businessID } = req.body;
+    
     const userID = req.params.userID
 
-    User.findByIdAndUpdate(userID,{ fullName,phone,country,pictureUrl,experience,businessID },{new:true} ).populate('businessID')
+    User.findByIdAndUpdate(userID,{ fullName,phone,country,pictureUrl,position,businessID },{new:true} )
+    .populate('businessID')
     .then((userUpdated)=>{
-        const newRol = userUpdated.businessID.owner === userUpdated._id ? 'admin' : 'adminPending'
+        const newRol = userUpdated.businessID.owner + '' === userUpdated._id + '' ? 'admin' : 'memberPending'
 
         return User.findByIdAndUpdate(userID,{ rol:newRol },{new:true} )
-        })
-        .then((userUpdated2)=>{
-            Business.findByIdAndUpdate(userUpdated2.businessID,{$push:{'employees':userUpdated2._id}},{new:true})
-            res.status(200).json(userUpdated2)})
+    })
+    .then((userUpdated2)=>{
+        Business.findByIdAndUpdate(userUpdated2.businessID,{$push:{'members':userUpdated2._id}},{new:true})
+        res.status(200).json(userUpdated2)})
     .catch(err => {
         console.log(err)
         res.status(500).json({ message: "Sorry internal error occurred" })
         });
 })
 
-router.get('/:userID',(req, res, next) => {
+router.get('/profiles/:userID',(req, res, next) => {
     const userID = req.params.userID
     User.findById(userID).populate('businessID').then(userFound =>{
         const {businessID,rol,fullName} = userFound
         const userInfo = {businessID,rol,fullName}
         res.status(200).json(userInfo)})
 })
+router.get('/profile/:userID',(req,res,next) =>{
+    const userID = req.params.userID
+    User.findById(userID).populate('businessID').then(userFound =>{
+      const {fullName,pictureUrl,username,email,phone,country,experience,businessID} = userFound
+      const userInfo = {fullName,pictureUrl,username,email,phone,country,experience,businessID}
+      res.status(200).json(userInfo)})
+  } )
 
 
 /////////////777777  CREATE ROUTE TO UPDATE THE CREATE PROFILE USER

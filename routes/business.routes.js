@@ -17,7 +17,7 @@ router.get('/', (req, res, next) => {
 
 
 
-router.post('/', isAuthenticated, (req, res, next) => {
+router.post('/', (req, res, next) => {
 	const {businessName,owner,address,pictureUrl} = req.body;
 
 	Business.findOne({ businessName }).then((foundBusiness) => {
@@ -30,9 +30,9 @@ router.post('/', isAuthenticated, (req, res, next) => {
 	})
     .then(business =>{
       console.log(business);
-        User.findByIdAndUpdate(owner,{businessID:business._id,rol:'admin'},{new:true}).
-        then((userUpdated) =>{
-          const user = userUpdated
+        User.findById(owner).
+        then((userFound) =>{
+          const user = userFound
           // Send email confirmation create a Business
         const transporter = nodemailer.createTransport({
           service:'gmail',
@@ -43,7 +43,7 @@ router.post('/', isAuthenticated, (req, res, next) => {
         });
         let mailCreateBusiness = {
           from: process.env.MAIL,
-          to: userUpdated.email,
+          to: userFound.email,
           subject: 'You successfully created a Business profile!',
           html: `
           <div style='width:85%; margin:auto'>
@@ -55,7 +55,7 @@ router.post('/', isAuthenticated, (req, res, next) => {
                     </a>
                   </div>
                   <div style='padding:10px'>
-                      <h1 style='margin-top:3px'>Hi ${userUpdated.username},</h1>
+                      <h1 style='margin-top:3px'>Hi ${userFound.username},</h1>
                       <p>Welcome to WSO Security-App. </p>
                       <h3>You have created a business named: <span style='padding-left:10px'>${businessName}</span></h3>
                       <div>
@@ -97,14 +97,15 @@ router.post('/', isAuthenticated, (req, res, next) => {
       });
 });
 
-router.get('/:businessID',(req,res,next) =>{
+router.get('/profile/:businessID',(req,res,next) =>{
   const businessID = req.params.businessID
   Business.findById(businessID).then(businessFound =>{
-    res.status(200).json(businessFound)})
-
+    const {businessName,address,pictureUrl} = businessFound
+    const businessInfo = {businessName,address,pictureUrl}
+    res.status(200).json(businessInfo)})
 } )
 
-router.put('/:businessID',(req,res,next) =>{
+router.put('/profile/:businessID',(req,res,next) =>{
   const businessID = req.params.businessID
   
 	const {businessName,address,pictureUrl} = req.body;
