@@ -6,9 +6,14 @@ const User = require('../models/User.model');
 
 const { isAuthenticated } = require("../middleware/jwt.middleware");
 
-router.get('/', (req, res, next) => {
+router.get('/profile', (req, res, next) => {
   Business.find()
-  .then(businesses => res.status(200).json(businesses))
+  .then(businessesFound => {
+    const businesses = businessesFound.map(buz=>{
+      return {key:buz._id,value:buz.businessName}
+    })
+    // console.log(businesses);
+    res.status(200).json(businesses)})
   .catch(err => {
     console.log(err)
     res.status(500).json({ message: "Sorry internal error occurred" })
@@ -29,7 +34,7 @@ router.post('/', (req, res, next) => {
 		return Business.create({businessName,owner,address,pictureUrl});
 	})
     .then(business =>{
-      console.log(business);
+      // console.log(business);
         User.findById(owner).
         then((userFound) =>{
           const user = userFound
@@ -99,10 +104,15 @@ router.post('/', (req, res, next) => {
 
 router.get('/profile/:businessID',(req,res,next) =>{
   const businessID = req.params.businessID
-  Business.findById(businessID).then(businessFound =>{
+  Business.findById(businessID)
+  .then(businessFound =>{
     const {businessName,address,pictureUrl} = businessFound
     const businessInfo = {businessName,address,pictureUrl}
     res.status(200).json(businessInfo)})
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({ message: "Sorry internal error occurred" })
+    });
 } )
 
 router.put('/profile/:businessID',(req,res,next) =>{
@@ -111,7 +121,8 @@ router.put('/profile/:businessID',(req,res,next) =>{
 	const {businessName,address,pictureUrl} = req.body;
 
   Business.findByIdAndUpdate(businessID,{businessName,address,pictureUrl},{new:true})
-  .then(business => res.status(200).json(business))
+  .then(business => {
+    res.status(200).json(business)})
   .catch(err => {
     console.log(err)
     res.status(500).json({ message: "Sorry internal error occurred" })

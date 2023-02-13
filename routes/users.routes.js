@@ -35,19 +35,54 @@ router.post('/updateUser/:userID', (req, res, next) => {
 
 router.get('/profiles/:userID',(req, res, next) => {
     const userID = req.params.userID
-    User.findById(userID).populate('businessID').then(userFound =>{
-        const {businessID,rol,fullName} = userFound
-        const userInfo = {businessID,rol,fullName}
+    User.findById(userID).populate('businessID')
+    .then(userFound =>{
+        const {businessID:businessIDFound,fullName,pictureUrl,_id} = userFound
+        const {_id:businessID_id,pictureUrl:businessIDPictureUrl } = businessIDFound
+        const businessID = {
+            _id:businessID_id,
+            pictureUrl:businessIDPictureUrl
+        }
+        const userInfo = {businessID,fullName,pictureUrl,_id}
         res.status(200).json(userInfo)})
+    .catch(err => {
+        console.log(err)
+        res.status(500).json({ message: "Sorry internal error occurred" })
+        });
+
 })
 router.get('/profile/:userID',(req,res,next) =>{
     const userID = req.params.userID
-    User.findById(userID).populate('businessID').then(userFound =>{
-      const {fullName,pictureUrl,username,email,phone,country,experience,businessID} = userFound
-      const userInfo = {fullName,pictureUrl,username,email,phone,country,experience,businessID}
-      res.status(200).json(userInfo)})
+    // console.log(userID);
+    User.findById(userID).populate('businessID')
+    .then(userFound =>{
+        const {fullName,pictureUrl,username,email,phone,country,position,businessID:businessIDFound} = userFound
+        const {businessName:businessIDName,_id:businessID_id} = businessIDFound
+        const businessID = {
+            businessName:businessIDName,_id:businessID_id
+        }
+        const userInfo = {fullName,pictureUrl,username,email,phone,country,position,businessID}
+        res.status(200).json(userInfo)})
+    .catch(err => {
+    console.log(err)
+    res.status(500).json({ message: "Sorry internal error occurred" })
+    });
   } )
 
+  router.put('/profile/:userID',(req,res,next) =>{
+    const userID = req.params.userID
+
+    const {fullName,position,username,email,country,phone,businessID} = req.body;
+  
+    User.findByIdAndUpdate(userID,{fullName,position,username,email,country,phone,businessID},{new:true})
+    .then(user => {
+      res.status(200).json(user)})
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({ message: "Sorry internal error occurred" })
+      });
+  
+  })
 
 /////////////777777  CREATE ROUTE TO UPDATE THE CREATE PROFILE USER
 
