@@ -130,6 +130,26 @@ router.put('/profile/:businessID',(req,res,next) =>{
 
 })
 
+router.get('/members/:businessID',(req,res,next) =>{
+  const businessID = req.params.businessID
+  Business.findById(businessID).populate('members')
+  .then(businessFound =>{
+    const {members:membersFound} = businessFound
+
+    const members = membersFound.map(buz=>{
+      return {_id:buz._id,fullName:buz.fullName,position:buz.position,pictureUrl:buz.pictureUrl,rol:buz.rol}
+    })
+
+    const businessInfo = {members}
+    res.status(200).json(businessInfo)})
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({ message: "Sorry internal error occurred" })
+    });
+} )
+
+
+
 // router.get('/:businessNameEncoded',(req,res,next) =>{
 //     const name = req.params.businessNameEncoded.split('-').join(' ')
 
