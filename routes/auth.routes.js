@@ -1,7 +1,9 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
+
+const sendMail = require('../utils/send-mail');
+const { newUser } = require('../utils/mails-content');
 
 const User = require('../models/User.model');
 
@@ -46,56 +48,19 @@ router.post('/signup', (req, res, next) => {
 
 			// Create a new object that doesn't expose the password
 			const user = { username, email, rol, _id };
+			
+			//Send MAIL
+			const recipients = [user.email]
 
-			// Send email confirmation create an account
-			const transporter = nodemailer.createTransport({
-				service: 'gmail',
-				auth: {
-					user: process.env.EMAIL,
-					pass: process.env.PASSMAIL,
-				},
-			});
-			let mailCreateAccount = {
+			const mailOptions = {
 				from: process.env.MAIL,
-				to: user.email,
+				to: recipients,
 				subject: 'You successfully created a WSO Security-App account!',
-				html: `
-          <div style='width:85%; margin:auto'>
-              <div>
-                  <div style='padding:10px'>
-                      <a href='https://wso-security.com/en/' style='display:flex; text-decoration: none; background-color: #000000'>
-                          <img src='https://res.cloudinary.com/dwtnqtdcs/image/upload/v1674671880/secuApp-gallery/wso-white_djbovg.png' width="60px" height="60px" style='padding:10px'/>
-                          <h2 style='margin-left:15px; color:#ffffff'>WSO Worldwide Security Options</h2>
-                      </a>
-                  </div>
-                  <div style='padding:10px'>
-                      <h1 style='margin-top:3px'>Hi ${user.username},</h1>
-                      <p>Welcome to WSO Security-App. </p>
-                      <div>
-                          <div>
-                              <div>
-                                  <hr/>
-                                  <h3>Thanks for signing up.  You can now create a Business or you can add yourself to the Business you work for. </h3>
-                                  <p>If you didn't sign up for an account please ignore  this email.  Someone probably made a typo and entered your email address on accident.</p>
-                                  
-                                  <p>Thanks for using our service.</p>
-                                  <h3>WSO Worldwide Security Options</h3>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </div>
-          `,
-			};
-			transporter.sendMail(mailCreateAccount, function (error, info) {
-				if (error) {
-					console.log(error);
-				} else {
-					console.log('Email Create Account sent: ' + info.response);
-				}
-			});
-			// Send a json response containing the user object
+				html: newUser(user)
+			}
+
+			sendMail(mailOptions);
+			
 			console.log(user);
 			res.status(201).json({ user: user });
 		})
