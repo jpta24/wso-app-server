@@ -6,6 +6,7 @@ const { newBusiness } = require('../utils/mails-content');
 
 const Business = require('../models/Bussiness.model');
 const User = require('../models/User.model');
+const Client = require('../models/Client.model');
 
 router.get('/profile', (req, res, next) => {
   Business.find()
@@ -96,6 +97,47 @@ router.get('/members/:businessID',(req,res,next) =>{
 
     const businessInfo = {members}
     res.status(200).json(businessInfo)})
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({ message: "Sorry internal error occurred" })
+    });
+} )
+
+router.post('/client/:businessID', (req, res, next) => {
+  const businessID = req.params.businessID
+	const {clientName,address,pictureUrl} = req.body;
+  Business.findById(businessID).populate('clients')
+  .then(business=>{
+    if (business.clients && business.clients.includes(clientName)) {
+      res.status(400).json({ message: 'Client already exists.' });
+			return;
+    }
+    return Client.create({clientName,address,pictureUrl})
+  })
+  .then(client=>{
+    return Business.findByIdAndUpdate(businessID,{$push: { 'clients': client._id }})
+  })
+  .then(() =>{
+    res.status(201);
+  })
+  .catch(err => {
+    console.log(err);
+    res.status(500).json({ message: "Could not create Client, check data and try again" })
+  });
+});
+
+router.get('/clients/:businessID',(req,res,next) =>{
+  const businessID = req.params.businessID
+  Business.findById(businessID).populate('clients')
+  .then(businessFound =>{
+    const {clients:clientsFound} = businessFound
+
+    const clients = clientsFound.map(client=>{
+      return {_id:client._id,clientName:client.clientName,pictureUrl:client.pictureUrl,address:client.address}
+    })
+
+    const clientInfo = {clients}
+    res.status(200).json(clientInfo)})
   .catch(err => {
     console.log(err)
     res.status(500).json({ message: "Sorry internal error occurred" })
