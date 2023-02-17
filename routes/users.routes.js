@@ -12,38 +12,83 @@ router.get('/',(req, res, next) => {
         res.json(all))
 })
 
-router.post('/updateUser/:userID', (req, res, next) => {
-    const { fullName,phone,country,pictureUrl,position,businessID } = req.body;
+router.post('/updateUser/:userID', async (req, res, next) => {
+    try {
+      const { fullName, phone, country, pictureUrl, position, businessID:businessIDUser } = req.body;
+      const userID = req.params.userID;
+  
+      const userUpdated = await User.findByIdAndUpdate(
+        userID,
+        { fullName, phone, country, pictureUrl, position, businessID:businessIDUser },
+        { new: true }
+      ).populate('businessID');
+  
+      const newRol = userUpdated.businessID.owner + '' === userUpdated._id + '' ? 'admin' : 'memberPending';
+      const userUpdated2 = await User.findByIdAndUpdate(
+        userID,
+        { rol: newRol },
+        { new: true }
+      );
+      
+      const businessUpdated = await Business.findByIdAndUpdate(
+        userUpdated2.businessID,
+        { $push: { 'members': userUpdated2._id } },
+        { new: true }
+      );
+  
+      const { username, _id, rol, businessID } = userUpdated2;
+      const user = { username, _id, rol, businessID };
+      console.log('updateUser:', user);
+      res.status(200).json(user);
+    } catch (err) {
+      console.log(err);
+      next(err);
+    }
+  });
+  
+// router.post('/updateUser/:userID', (req, res, next) => {
+//     const { fullName,phone,country,pictureUrl,position,businessID } = req.body;
     
-    const userID = req.params.userID
+//     const userID = req.params.userID
 
-    User.findByIdAndUpdate(userID,{ fullName,phone,country,pictureUrl,position,businessID },{new:true} )
-    .populate('businessID')
-    .then((userUpdated)=>{
-        const newRol = userUpdated.businessID.owner + '' === userUpdated._id + '' ? 'admin' : 'memberPending'
+//     User.findByIdAndUpdate(userID,{ fullName,phone,country,pictureUrl,position,businessID },{new:true} )
+//     .populate('businessID')
+//     .then((userUpdated)=>{
+//         const newRol = userUpdated.businessID.owner + '' === userUpdated._id + '' ? 'admin' : 'memberPending'
 
-        return User.findByIdAndUpdate(userID,{ rol:newRol },{new:true} )
-    })
-    .then((userUpdated2)=>{
-        Business.findByIdAndUpdate(userUpdated2.businessID,{$push:{'members':userUpdated2._id}},{new:true})
-        res.status(200).json(userUpdated2)})
-    .catch(err => {
-        console.log(err)
-        res.status(500).json({ message: "Sorry internal error occurred" })
-        });
-})
+//         return User.findByIdAndUpdate(userID,{ rol:newRol },{new:true} )
+//     })
+//     .then((userUpdated2)=>{
+//         console.log('updatedUser.businessID:',userUpdated2.businessID);
+//         Business.findByIdAndUpdate(userUpdated2.businessID,{$push:{'members':userUpdated2._id}},{new:true})
+//         const {username,_id,rol,businessID} = userUpdated2
+//         const user = {username,_id,rol,businessID}
+//         console.log('updateUser:',user);
+//         res.status(200).json(user)})
+//     .catch(err => {
+//         console.log(err)
+//         res.status(500).json({ message: "Sorry internal error occurred" })
+//         });
+// })
 
 router.get('/profiles/:userID',(req, res, next) => {
     const userID = req.params.userID
     User.findById(userID).populate('businessID')
     .then(userFound =>{
-        const {businessID:businessIDFound,fullName,pictureUrl,_id} = userFound
-        const {_id:businessID_id,pictureUrl:businessIDPictureUrl } = businessIDFound
-        const businessID = {
+        let businessIDFound
+        let businessID 
+        if (userFound.businessID) {
+            businessIDFound = userFound.businessID
+            const {_id:businessID_id,pictureUrl:businessIDPictureUrl } = businessIDFound
+            businessID = {
             _id:businessID_id,
             pictureUrl:businessIDPictureUrl
+            }
         }
-        const userInfo = {businessID,fullName,pictureUrl,_id}
+        const {fullName,pictureUrl,_id,rol} = userFound
+        
+        const userInfo = {businessID,fullName,pictureUrl,_id,rol}
+        // console.log('profiles:',userInfo);
         res.status(200).json(userInfo)})
     .catch(err => {
         console.log(err)
@@ -56,33 +101,46 @@ router.get('/profile/:userID',(req,res,next) =>{
     // console.log(userID);
     User.findById(userID).populate('businessID')
     .then(userFound =>{
-        const {fullName,pictureUrl,username,email,phone,country,position,businessID:businessIDFound} = userFound
+        const {fullName,pictureUrl,username,email,phone,country,position,businessID:businessIDFound,rol} = userFound
         const {businessName:businessIDName,_id:businessID_id} = businessIDFound
         const businessID = {
             businessName:businessIDName,_id:businessID_id
         }
-        const userInfo = {fullName,pictureUrl,username,email,phone,country,position,businessID}
+        const userInfo = {fullName,pictureUrl,username,email,phone,country,position,businessID,rol}
         res.status(200).json(userInfo)})
     .catch(err => {
     console.log(err)
     res.status(500).json({ message: "Sorry internal error occurred" })
     });
-  } )
+} )
 
-  router.put('/profile/:userID',(req,res,next) =>{
+router.put('/profile/:userID',(req,res,next) =>{
     const userID = req.params.userID
 
     const {fullName,position,username,email,country,phone,businessID} = req.body;
   
     User.findByIdAndUpdate(userID,{fullName,position,username,email,country,phone,businessID},{new:true})
     .then(user => {
-      res.status(200).json(user)})
+        res.status(200).json(user)})
     .catch(err => {
-      console.log(err)
-      res.status(500).json({ message: "Sorry internal error occurred" })
-      });
+        console.log(err)
+        res.status(500).json({ message: "Sorry internal error occurred" })
+    });
   
-  })
+})
+
+router.put('/updateRol/:userID',(req,res,next) =>{
+    const userID = req.params.userID
+    const {rol,change} = req.body
+    User.findByIdAndUpdate(userID,{rol,$push:{change:change}},{new:true})
+    .then((userUpdated)=>{
+        res.status(200).json(userUpdated)})
+    .catch(err => {
+        console.log(err)
+        res.status(500).json({ message: "Sorry internal error occurred" })
+    });
+    
+})
 
 /////////////777777  CREATE ROUTE TO UPDATE THE CREATE PROFILE USER
 

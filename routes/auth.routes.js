@@ -8,7 +8,6 @@ const User = require('../models/User.model');
 const { isAuthenticated } = require('../middleware/jwt.middleware.js');
 
 router.post('/signup', (req, res, next) => {
-	console.log(req.body);
 	const saltRounds = 10;
 	let rol = 'user';
 
@@ -43,7 +42,7 @@ router.post('/signup', (req, res, next) => {
 		.then((createdUser) => {
 			// Deconstruct the newly created user object to omit the password
 			// We should never expose passwords publicly
-			const { username, email, rol, _id } = createdUser;
+			const { username, email, rol, _id} = createdUser;
 
 			// Create a new object that doesn't expose the password
 			const user = { username, email, rol, _id };
@@ -89,13 +88,13 @@ router.post('/signup', (req, res, next) => {
           </div>
           `,
 			};
-			// transporter.sendMail(mailCreateAccount, function (error, info) {
-			// 	if (error) {
-			// 		console.log(error);
-			// 	} else {
-			// 		console.log('Email Create Account sent: ' + info.response);
-			// 	}
-			// });
+			transporter.sendMail(mailCreateAccount, function (error, info) {
+				if (error) {
+					console.log(error);
+				} else {
+					console.log('Email Create Account sent: ' + info.response);
+				}
+			});
 			// Send a json response containing the user object
 			console.log(user);
 			res.status(201).json({ user: user });
@@ -131,20 +130,10 @@ router.post('/login', (req, res, next) => {
 
 			if (passwordCorrect) {
 				// Deconstruct the user object to omit the password
-				const {
-					username,
-					_id,
-					rol,
-					businessID
-				} = foundUser;
+				const {_id} = foundUser;
 
 				// Create an object that will be set as the token payload
-				const payload = {
-					username,
-					_id,
-					rol,
-					businessID
-				};
+				const payload = {_id};
 
 				// Create and sign the token
 				const authToken = jwt.sign(payload, process.env.TOKEN_SECRET, {
@@ -168,7 +157,13 @@ router.get('/verify', isAuthenticated, (req, res, next) => {
 
 	// Send back the object with user data
 	// previously set as the token payload
-	res.status(200).json(req.payload);
+	User.findById(req.payload._id)
+	.then(userFound=>{
+		const {username,_id,rol,businessID} = userFound
+		const user = {username,_id,rol,businessID}
+		res.status(200).json(user);	
+	})
+	
 });
 
 module.exports = router;

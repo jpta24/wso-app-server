@@ -11,7 +11,7 @@ const userSchema = new Schema(
     country:String,
 		rol: {
 			type: String,
-			enum: ['developer', 'adminPending','admin', 'member', 'memberPending', 'user'],
+			enum: ['developer', 'adminPending','admin', 'member', 'memberPending', 'user','rejected'],
 		},
 		businessID:{
       type: Schema.Types.ObjectId,
@@ -22,6 +22,16 @@ const userSchema = new Schema(
       ref: 'Service',
 		},
     position: String,
+    change:[
+      {
+        by:{
+          type: Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        date: Date,
+        change:String
+      }
+    ]
   //   experience:{
   //     coordinator:Boolean,
   //     protectionOfficer:Boolean,

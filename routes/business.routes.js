@@ -12,7 +12,6 @@ router.get('/profile', (req, res, next) => {
     const businesses = businessesFound.map(buz=>{
       return {key:buz._id,value:buz.businessName}
     })
-    // console.log(businesses);
     res.status(200).json(businesses)})
   .catch(err => {
     console.log(err)
@@ -34,7 +33,6 @@ router.post('/', (req, res, next) => {
 		return Business.create({businessName,owner,address,pictureUrl});
 	})
     .then(business =>{
-      // console.log(business);
         User.findById(owner).
         then((userFound) =>{
           const user = userFound
@@ -127,7 +125,6 @@ router.put('/profile/:businessID',(req,res,next) =>{
     console.log(err)
     res.status(500).json({ message: "Sorry internal error occurred" })
     });
-
 })
 
 router.get('/members/:businessID',(req,res,next) =>{
