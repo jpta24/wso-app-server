@@ -118,7 +118,7 @@ router.post('/client/:businessID', (req, res, next) => {
     return Business.findByIdAndUpdate(businessID,{$push: { 'clients': client._id }})
   })
   .then(() =>{
-    res.status(201);
+    res.status(201).json({ message: 'Client Created.' });
   })
   .catch(err => {
     console.log(err);
@@ -133,7 +133,7 @@ router.get('/clients/:businessID',(req,res,next) =>{
     const {clients:clientsFound} = businessFound
 
     const clients = clientsFound.map(client=>{
-      return {_id:client._id,clientName:client.clientName,pictureUrl:client.pictureUrl,address:client.address}
+      return {_id:client._id,clientName:client.clientName,pictureUrl:client.pictureUrl,address:client.address,saved:client.saved}
     })
 
     const clientInfo = {clients}
@@ -143,6 +143,28 @@ router.get('/clients/:businessID',(req,res,next) =>{
     res.status(500).json({ message: "Sorry internal error occurred" })
     });
 } )
+
+router.put('/client/:clientID',(req,res,next) => {
+  const clientID = req.params.clientID
+  const {saved,businessID} = req.body
+  Client.findByIdAndUpdate(clientID,{$set:{saved}},{new:true})
+  .then((client)=>{
+    return   Business.findById(businessID).populate('clients')
+  })
+  .then(businessFound =>{
+    const {clients:clientsFound} = businessFound
+
+    const clients = clientsFound.map(client=>{
+      return {_id:client._id,clientName:client.clientName,pictureUrl:client.pictureUrl,address:client.address,saved:client.saved}
+    })
+
+    const clientInfo = {clients}
+    res.status(200).json(clientInfo)})
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({ message: "Sorry internal error occurred" })
+    });
+})
 
 
 module.exports = router;
