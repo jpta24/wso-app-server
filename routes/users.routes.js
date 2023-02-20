@@ -1,5 +1,9 @@
 const router = require('express').Router();
 
+const sendMail = require('../utils/send-mail');
+const { newMember,changeRol} = require('../utils/mails-content');
+
+
 const Business = require('../models/Bussiness.model');
 const User = require('../models/User.model');
 
@@ -30,7 +34,18 @@ router.post('/updateUser/:userID', async (req, res, next) => {
         userUpdated2.businessID,
         { $push: { 'members': userUpdated2._id } },
         { new: true }
-      );
+      ).populate('members');
+
+      const recipients = businessUpdated.members.filter(mem=>mem.rol==='admin').map(member=>member.email)
+
+      const mailOptions = {
+        from: process.env.MAIL,
+        to: recipients,
+        subject: `New Member for ${businessUpdated.businessName}`,
+        html: newMember(businessUpdated.businessName,userUpdated2)
+      }
+  
+      sendMail(mailOptions);
   
       const { username, _id, rol, businessID } = userUpdated2;
       const user = { username, _id, rol, businessID };
@@ -103,8 +118,18 @@ router.put('/profile/:userID',(req,res,next) =>{
 router.put('/updateRol/:userID',(req,res,next) =>{
     const userID = req.params.userID
     const {rol,change} = req.body
-    User.findByIdAndUpdate(userID,{rol,$push:{change:change}},{new:true})
+    User.findByIdAndUpdate(userID,{rol,$push:{change:change}},{new:true}).populate('businessID')
     .then((userUpdated)=>{
+        const recipients = userUpdated.email
+
+        const mailOptions = {
+          from: process.env.MAIL,
+          to: recipients,
+          subject: `Change in your Role Status in ${userUpdated.businessID.businessName}`,
+          html: changeRol(userUpdated)
+        }
+    
+        sendMail(mailOptions);
         res.status(200).json(userUpdated)})
     .catch(err => {
         console.log(err)
