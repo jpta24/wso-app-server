@@ -112,7 +112,8 @@ router.post('/client/:businessID', (req, res, next) => {
       res.status(400).json({ message: 'Client already exists.' });
 			return;
     }
-    return Client.create({clientName,address,pictureUrl})
+    const saved=false
+    return Client.create({clientName,address,pictureUrl,saved})
   })
   .then(client=>{
     return Business.findByIdAndUpdate(businessID,{$push: { 'clients': client._id }})
