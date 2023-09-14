@@ -7,6 +7,7 @@ const isAuthenticated = jwt({
   requestProperty: 'payload', 
   getToken: getTokenFromHeaders
 });
+console.log('test');
 
 
 // Function used to extract the JWT token from the request's 'Authorization' Headers
